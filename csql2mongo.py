@@ -21,7 +21,7 @@ def displayVersion():
 def displayInfo():
 	print(__doc__)
 
-def csql2mongo(file, out, db, verbose, version, info):
+def csql2mongo(file, out, verbose, version, info):
 
 	if len(sys.argv) == 1:
 		displayInfo()
@@ -110,10 +110,9 @@ def csql2mongo(file, out, db, verbose, version, info):
 parser = argparse.ArgumentParser(description='Utility to convert a SQL dump to a MongoDB JSON dump.')
 parser.add_argument('-f', '--file', action='store', dest='file', metavar="FILE")
 parser.add_argument('-o', '--out', action='store', dest='out', metavar="OUT")
-parser.add_argument('-d', '--db', action='store', dest='db', metavar="DB")
 parser.add_argument('-l', '--verbose', action='store_true', dest='verbose')
 parser.add_argument('-v', '--version', action='store_true', dest='version')
 parser.add_argument('-i', '--info', action='store_true', dest='info')
 argv = parser.parse_args()
 
-csql2mongo(argv.file, argv.out, argv.db, argv.verbose, argv.version, argv.info)
+csql2mongo(argv.file, argv.out, argv.verbose, argv.version, argv.info)
