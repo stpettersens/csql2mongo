@@ -21,7 +21,7 @@ def displayVersion():
 def displayInfo():
 	print(__doc__)
 
-def csql2mongo(file, out, verbose, version, info):
+def csql2mongo(file, out, tz, verbose, version, info):
 
 	if len(sys.argv) == 1:
 		displayInfo()
@@ -70,20 +70,30 @@ def csql2mongo(file, out, verbose, version, info):
 
 		m = re.search('(^[\d\"\'a-zA-Z\_\.][^DROP][^INSERT][^\n|,|)]+)', line)
 		if m and headers == False and id == False:
-			inserts.append(m.group(1))
+			value = m.group(1)
+
+			pattern = re.compile('\'\d{3}\w{3}\d{3}')
+			if pattern.match(value):
+				value = '{"$oid":' + value + '}'
+
+			pattern = re.compile('\'\d{4}\-\d{2}\-\d{2}')
+			if pattern.match(value):
+				value = re.sub('\s', 'T', value)
+				value = value[:-1]
+				value += '.000'
+				if tz: value += 'Z\''
+				else: value += '+0000\''
+				value = '{"$date":' + value + '}'
+
+			inserts.append(value)
 
 		id = False
 
 	fn = len(fields)
-	x = 0
-	for _id in inserts[::fn]:
-		inserts[x] = '{"$oid":' + inserts[x] + '}'
-		x = x + fn
-
 	rrecords = []
-	inserts = ['@'.join(inserts[i:i+fn]) for i in range(0, len(inserts), fn)]
+	inserts = ['§'.join(inserts[i:i+fn]) for i in range(0, len(inserts), fn)]
 	for insert in inserts:
-		records = insert.split('@')
+		records = insert.split('§')
 		x = 0
 		
 		for field in fields:
@@ -92,7 +102,7 @@ def csql2mongo(file, out, verbose, version, info):
 			rrecords.append(record)
 			x = x + 1
 
-	rrecords = ['@'.join(rrecords[i:i+fn]) for i in range(0, len(rrecords), fn)]
+	rrecords = ['§'.join(rrecords[i:i+fn]) for i in range(0, len(rrecords), fn)]
 
 	if verbose:
 		print('\nGenerating MongoDB JSON dump file: \'{0}\' from\nSQL dump file: \'{1}\''
@@ -100,19 +110,21 @@ def csql2mongo(file, out, verbose, version, info):
 
 	f = open(out, 'w')
 	for record in rrecords:
-		record = re.sub('@', ',', record)
+		record = re.sub('§', ',', record)
 		record = '{' + record + '}'
 		f.write(record + '\n')
 
 	f.close()
 
+
 # Handle any command line arguments.
 parser = argparse.ArgumentParser(description='Utility to convert a SQL dump to a MongoDB JSON dump.')
 parser.add_argument('-f', '--file', action='store', dest='file', metavar="FILE")
 parser.add_argument('-o', '--out', action='store', dest='out', metavar="OUT")
+parser.add_argument('-t', '--tz', action='store_true', dest='tz')
 parser.add_argument('-l', '--verbose', action='store_true', dest='verbose')
 parser.add_argument('-v', '--version', action='store_true', dest='version')
 parser.add_argument('-i', '--info', action='store_true', dest='info')
 argv = parser.parse_args()
 
-csql2mongo(argv.file, argv.out, argv.verbose, argv.version, argv.info)
+csql2mongo(argv.file, argv.out, argv.tz, argv.verbose, argv.version, argv.info)
