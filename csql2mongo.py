@@ -90,10 +90,11 @@ def csql2mongo(file, out, tz, verbose, version, info):
 		id = False
 
 	fn = len(fields)
+	x = 0
 	rrecords = []
-	inserts = ['§'.join(inserts[i:i+fn]) for i in range(0, len(inserts), fn)]
+	inserts = ['@'.join(inserts[i:i+fn]) for i in range(0, len(inserts), fn)]
 	for insert in inserts:
-		records = insert.split('§')
+		records = insert.split('@')
 		x = 0
 		
 		for field in fields:
@@ -102,7 +103,7 @@ def csql2mongo(file, out, tz, verbose, version, info):
 			rrecords.append(record)
 			x = x + 1
 
-	rrecords = ['§'.join(rrecords[i:i+fn]) for i in range(0, len(rrecords), fn)]
+	rrecords = ['@'.join(rrecords[i:i+fn]) for i in range(0, len(rrecords), fn)]
 
 	if verbose:
 		print('\nGenerating MongoDB JSON dump file: \'{0}\' from\nSQL dump file: \'{1}\''
@@ -110,7 +111,7 @@ def csql2mongo(file, out, tz, verbose, version, info):
 
 	f = open(out, 'w')
 	for record in rrecords:
-		record = re.sub('§', ',', record)
+		record = re.sub('@', ',', record)
 		record = '{' + record + '}'
 		f.write(record + '\n')
 
