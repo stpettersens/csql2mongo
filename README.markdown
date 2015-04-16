@@ -6,3 +6,8 @@ Utility to convert a SQL dump to a MongoDB JSON dump.
 For migrating data from MySQL or similar RDBMS to MongoDB.
 
 Usage: `csql2mongo -f data.sql -o data.json`
+
+Tested with:
+* Python 2.7.9 and PyPy 2.5.1 and IronPython 2.7.5 (works).
+* Jython 2.5.3 (use Jython tweaked version): 
+* `jython cmongo2sql.jy.py -f data.json -o data.sql`)
