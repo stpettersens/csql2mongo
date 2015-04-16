@@ -49,7 +49,7 @@ def csql2mongo(file, out, tz, verbose, version, info):
 	lines = f.readlines()
 	f.close()
 
-	# Preprocess SQL dump so that is compatible for conversion.
+	# Preprocess SQL dump so that it is compatible for conversion.
 	processed_lines = []
 	for line in lines:
 		l = line.lstrip()
