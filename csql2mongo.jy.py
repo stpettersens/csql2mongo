@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env jython
 """
 csql2mongo
 Utility to convert an SQL dump to a MongoDB JSON dump.
@@ -6,14 +6,14 @@ Utility to convert an SQL dump to a MongoDB JSON dump.
 Copyright 2015 Sam Saint-Pettersen.
 Licensed under the MIT/X11 License.
 
-Use -h switch for usage information.
+Tweaked for Jython.
 """
 import sys
 import os
 import re
-import argparse
+import getopt
 
-signature = 'csql2mongo 1.0.1 (https://github.com/stpettersens/csql2mongo)'
+signature = 'csql2mongo 1.0.1 [Jython] (https://github.com/stpettersens/csql2mongo)'
 
 def displayVersion():
 	print('\n' + signature);
@@ -127,8 +127,8 @@ def csql2mongo(file, out, tz, verbose, version, info):
 	rrecords = ['@@'.join(rrecords[i:i+fn]) for i in range(0, len(rrecords), fn)]
 
 	if verbose:
-		print('\nGenerating MongoDB JSON dump file: \'{0}\' from\nSQL dump file: \'{1}\''
-		.format(out, file))
+		print('\nGenerating MongoDB JSON dump file: \'%s\' from\nSQL dump file: \'%s\''
+		% (out, file))
 
 	f = open(out, 'w')
 	for record in rrecords:
@@ -140,13 +140,33 @@ def csql2mongo(file, out, tz, verbose, version, info):
 
 
 # Handle any command line arguments.
-parser = argparse.ArgumentParser(description='Utility to convert an SQL dump to a MongoDB JSON dump.')
-parser.add_argument('-f', '--file', action='store', dest='file', metavar="FILE")
-parser.add_argument('-o', '--out', action='store', dest='out', metavar="OUT")
-parser.add_argument('-t', '--tz', action='store_true', dest='tz')
-parser.add_argument('-l', '--verbose', action='store_true', dest='verbose')
-parser.add_argument('-v', '--version', action='store_true', dest='version')
-parser.add_argument('-i', '--info', action='store_true', dest='info')
-argv = parser.parse_args()
+try:
+	opts, args = getopt.getopt(sys.argv[1:], "f:o:tlvi")
+except:
+	print('Invalid option or argument.')
+	displayInfo()
+	sys.exit(2)
 
-csql2mongo(argv.file, argv.out, argv.tz, argv.verbose, argv.version, argv.info)
+file = None
+out = None
+tz = False
+verbose = False
+version = False
+info = False
+for o, a in opts:
+	if o == '-f':
+		file = a
+	elif o == '-o':
+		out = a
+	elif o == '-t':
+		tz = True
+	elif o == '-l':
+		verbose = True
+	elif o == '-v':
+		version = True
+	elif o == '-i':
+		info = True
+	else:
+		assert False, 'unhandled option'
+
+csql2mongo(file, out, tz, verbose, version, info)
