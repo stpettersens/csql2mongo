@@ -10,4 +10,4 @@ Usage: `csql2mongo -f data.sql -o data.json`
 Tested with:
 * Python 2.7.9, PyPy 2.5.1 and IronPython 2.7.5 (works).
 * Jython 2.5.3 (use Jython tweaked version): 
-* `jython cmongo2sql.jy.py -f data.json -o data.sql`)
+* `jython cmongo2sql.jy.py -f data.json -o data.sql`
