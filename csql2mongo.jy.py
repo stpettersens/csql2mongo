@@ -1,7 +1,7 @@
 #!/usr/bin/env jython
 """
 csql2mongo
-Utility to convert an SQL dump to a MongoDB JSON dump.
+Utility to convert a SQL dump to a MongoDB JSON dump.
 
 Copyright 2015 Sam Saint-Pettersen.
 Licensed under the MIT/X11 License.
