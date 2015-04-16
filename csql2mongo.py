@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 csql2mongo
-Utility to convert an SQL dump to a MongoDB JSON dump.
+Utility to convert a SQL dump to a MongoDB JSON dump.
 
 Copyright 2015 Sam Saint-Pettersen.
 Licensed under the MIT/X11 License.
@@ -39,7 +39,7 @@ def csql2mongo(file, out, tz, verbose, version, info):
 	if out == None: out = re.sub('.sql', '.json', file)
 
 	if file.endswith('.sql') == False:
-		print('File provided is not an SQL dump.')
+		print('File provided is not a SQL dump.')
 		sys.exit(1)
 
 	head, tail = os.path.split(file)
