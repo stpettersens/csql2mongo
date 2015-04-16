@@ -38,6 +38,10 @@ def csql2mongo(file, out, tz, verbose, version, info):
 
 	if out == None: out = re.sub('.sql', '.json', file)
 
+	if file.endswith('.sql') == False:
+		print('File provided is not an SQL dump.')
+		sys.exit(1)
+
 	head, tail = os.path.split(file)
 	collection = re.sub('.sql', '', tail)
 
@@ -48,31 +52,25 @@ def csql2mongo(file, out, tz, verbose, version, info):
 	fields = []
 	inserts = []
 	headers = False
-	id = False
 	for line in lines:
 
 		pattern = re.compile('CREATE TABLE')
 		if pattern.match(line):
 			headers = True
 
-		pattern = re.compile('_id')
-		if pattern.match(line):
-			fields.append('_id')
-			id = True
-		
 		m = re.search('(^[a-z0-9_]+)', line)
-		if m and headers and id == False: 
+		if m and headers: 
 			fields.append(m.group(1))
 
 		pattern = re.compile('INSERT INTO')
 		if pattern.match(line):
 			headers = False
 
-		m = re.search('(^[\d\"\'a-zA-Z\_\.][^DROP][^INSERT][^\n|,|)]+)', line)
-		if m and headers == False and id == False:
+		m = re.search('(^[\d\"\'a-zA-Z\_\.][^(DROP)][^(INSERT)][^\n|,|)]+)', line)
+		if m and headers == False:
 			value = m.group(1)
 
-			pattern = re.compile('\'\d{3}\w{3}\d{3}')
+			pattern = re.compile('\'[\d\w]{24}\'')
 			if pattern.match(value):
 				value = '{"$oid":' + value + '}'
 
@@ -87,23 +85,27 @@ def csql2mongo(file, out, tz, verbose, version, info):
 
 			inserts.append(value)
 
-		id = False
-
 	fn = len(fields)
 	x = 0
 	rrecords = []
-	inserts = ['@'.join(inserts[i:i+fn]) for i in range(0, len(inserts), fn)]
+	inserts = ['@@'.join(inserts[i:i+fn]) for i in range(0, len(inserts), fn)]
+
 	for insert in inserts:
-		records = insert.split('@')
+		records = insert.split('@@')
 		x = 0
+
+		a_fields = []
+		for record in records:
+			for field in fields:
+				a_fields.append(field)
 		
-		for field in fields:
-			record = '"' + field + '":' + records[x]
-			record = re.sub('\'', '"', record)
-			rrecords.append(record)
+		for record in records:
+			r = '"' + a_fields[x] + '":' + record
+			r = re.sub('\'', '"', r)
+			rrecords.append(r)
 			x = x + 1
 
-	rrecords = ['@'.join(rrecords[i:i+fn]) for i in range(0, len(rrecords), fn)]
+	rrecords = ['@@'.join(rrecords[i:i+fn]) for i in range(0, len(rrecords), fn)]
 
 	if verbose:
 		print('\nGenerating MongoDB JSON dump file: \'{0}\' from\nSQL dump file: \'{1}\''
@@ -111,7 +113,7 @@ def csql2mongo(file, out, tz, verbose, version, info):
 
 	f = open(out, 'w')
 	for record in rrecords:
-		record = re.sub('@', ',', record)
+		record = re.sub('@@', ',', record)
 		record = '{' + record + '}'
 		f.write(record + '\n')
 
