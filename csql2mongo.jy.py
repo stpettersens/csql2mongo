@@ -42,6 +42,10 @@ def csql2mongo(file, out, tz, verbose, version, info):
 		print('File provided is not a SQL dump.')
 		sys.exit(1)
 
+	if out.endswith('.json') == False:
+		print('Output file is not a JSON file.')
+		sys.exit(1)
+
 	head, tail = os.path.split(file)
 	collection = re.sub('.sql', '', tail)
 
@@ -75,17 +79,27 @@ def csql2mongo(file, out, tz, verbose, version, info):
 		if pattern.match(line):
 			headers = True
 
-		m = re.search('(^[\`a-z0-9_]+)', line)
+		m = re.search('(^[\`a-zA-Z0-9_]+)', line)
 		if m and headers: 
 			f = m.group(1)
 			f = re.sub('\`', '', f)
-			fields.append(f)
+			f = re.sub('CREATE|ENGINE|INSERT', '', f)
+			if len(f) > 0: fields.append(f)
 			
 		pattern = re.compile('INSERT INTO')
 		if pattern.match(line):
 			headers = False
 
-		m = re.search('(^[\d\"\'a-zA-Z\_\.][^(DROP)][^(INSERT)][^\n|,|)]+)', line)
+		value = ''
+		m = re.search('(^[\d.]+)', line)
+		if m and headers == False:
+			value = m.group(1)
+
+		m = re.search('(\'[\w\s]+\')', line, re.IGNORECASE)
+		if m and headers == False:
+			value = m.group(1)
+
+		m = re.search('(^[\d\"\'\w\_\.][^(DROP)][^(INSERT)][^\n|,|)]+)', line)
 		if m and headers == False:
 			value = m.group(1)
 
@@ -102,8 +116,8 @@ def csql2mongo(file, out, tz, verbose, version, info):
 				else: value += '+0000\''
 				value = '{"$date":' + value + '}'
 
-			inserts.append(value)
-
+		if len(value) > 0: inserts.append(value)
+		
 	fn = len(fields)
 	x = 0
 	rrecords = []
