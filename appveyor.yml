@@ -1,0 +1,28 @@
+#
+# Appveyor CI configuration.
+#
+
+environment:
+    matrix:
+        - PYTHON: "C:/Python27"
+
+install:
+    # Download Python package manager (`pip`):
+    - ps: (new-object net.webclient).DownloadFile("http://raw.github.com/pypa/pip/master/contrib/get-pip.py", "C:/get-pip.py")
+    - "%PYTHON%/python.exe C:/get-pip.py"
+
+    # Install cxfreeze utility via pip:
+    - "%PYTHON%/Scripts/pip.exe -q install cx_Freeze"
+
+build_script:
+    - "%PYTHON%/python.exe %PYTHON%/Scripts/cxfreeze csql2mongo.py --target-dir ."
+    - ps: "rm bz2.pyd"
+    - ps: "rm unicodedata.pyd"
+    - ps: "rm python27.dll"
+
+test_script:
+    - "csql2mongo.exe -l -f sample.sql"
+    - ps: "cat sample.sql"
+
+on_success:
+    - ps: "rm csql2mongo.exe"
