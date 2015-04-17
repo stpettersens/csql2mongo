@@ -22,7 +22,7 @@ build_script:
 
 test_script:
     - "csql2mongo.exe -l -f sample.sql"
-    - ps: "cat sample.sql"
+    - ps: "cat sample.json"
 
 on_success:
     - ps: "rm csql2mongo.exe"
