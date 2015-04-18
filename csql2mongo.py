@@ -32,7 +32,7 @@ def csql2mongo(file, out, tz, verbose, version, info):
 			displayVersion()
 
 		elif verbose == False and version == False and info == True:
-			displayVersion()
+			displayInfo()
 
 		sys.exit(0)
 
@@ -154,7 +154,7 @@ def csql2mongo(file, out, tz, verbose, version, info):
 
 
 # Handle any command line arguments.
-parser = argparse.ArgumentParser(description='Utility to convert an SQL dump to a MongoDB JSON dump.')
+parser = argparse.ArgumentParser(description='Utility to convert a SQL dump to a MongoDB JSON dump.')
 parser.add_argument('-f', '--file', action='store', dest='file', metavar="FILE")
 parser.add_argument('-o', '--out', action='store', dest='out', metavar="OUT")
 parser.add_argument('-t', '--tz', action='store_true', dest='tz')

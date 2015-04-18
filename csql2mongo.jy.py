@@ -32,7 +32,7 @@ def csql2mongo(file, out, tz, verbose, version, info):
 			displayVersion()
 
 		elif verbose == False and version == False and info == True:
-			displayVersion()
+			displayInfo()
 
 		sys.exit(0)
 
