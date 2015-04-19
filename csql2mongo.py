@@ -13,7 +13,7 @@ import os
 import re
 import argparse
 
-signature = 'csql2mongo 1.0.1 (https://github.com/stpettersens/csql2mongo)'
+signature = 'csql2mongo 1.0.2 (https://github.com/stpettersens/csql2mongo)'
 
 def displayVersion():
 	print('\n' + signature);
@@ -64,6 +64,7 @@ def csql2mongo(file, out, tz, verbose, version, info):
 		l = re.sub('\n\n', '\n', l)
 		processed_lines.append(l);
 	processed_lines = ''.join(processed_lines).split('\n')
+	if lines[0].startswith('--!'): processed_lines = lines
 	lines = []
 	x = 0
 	while x < len(processed_lines):
