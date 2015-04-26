@@ -13,7 +13,7 @@ import os
 import re
 import getopt
 
-signature = 'csql2mongo 1.0.1 [Jython] (https://github.com/stpettersens/csql2mongo)'
+signature = 'csql2mongo 1.0.3 [Jython] (https://github.com/stpettersens/csql2mongo)'
 
 def displayVersion():
 	print('\n' + signature);
@@ -21,7 +21,7 @@ def displayVersion():
 def displayInfo():
 	print(__doc__)
 
-def csql2mongo(file, out, tz, verbose, version, info):
+def csql2mongo(file, out, tz, mongotypes, array, verbose, version, info):
 
 	if len(sys.argv) == 1:
 		displayInfo()
@@ -46,6 +46,10 @@ def csql2mongo(file, out, tz, verbose, version, info):
 		print('Output file is not a JSON file.')
 		sys.exit(1)
 
+	if mongotypes == None: mongotypes = True
+
+	if array == None: array = False
+
 	head, tail = os.path.split(file)
 	collection = re.sub('.sql', '', tail)
 
@@ -64,6 +68,7 @@ def csql2mongo(file, out, tz, verbose, version, info):
 		l = re.sub('\n\n', '\n', l)
 		processed_lines.append(l);
 	processed_lines = ''.join(processed_lines).split('\n')
+	if lines[0].startswith('--!'): processed_lines = lines
 	lines = []
 	x = 0
 	while x < len(processed_lines):
@@ -80,12 +85,12 @@ def csql2mongo(file, out, tz, verbose, version, info):
 			headers = True
 
 		m = re.search('(^[\`a-zA-Z0-9_]+)', line)
-		if m and headers: 
+		if m and headers:
 			f = m.group(1)
 			f = re.sub('\`', '', f)
 			f = re.sub('CREATE|ENGINE|INSERT', '', f)
 			if len(f) > 0: fields.append(f)
-			
+
 		pattern = re.compile('INSERT INTO')
 		if pattern.match(line):
 			headers = False
@@ -104,8 +109,10 @@ def csql2mongo(file, out, tz, verbose, version, info):
 			value = m.group(1)
 
 			pattern = re.compile('\'[\d\w]{24}\'')
-			if pattern.match(value):
+			if pattern.match(value) and mongotypes:
 				value = '{"$oid":' + value + '}'
+			else:
+				value = value
 
 			pattern = re.compile('\'\d{4}\-\d{2}\-\d{2}')
 			if pattern.match(value):
@@ -114,10 +121,13 @@ def csql2mongo(file, out, tz, verbose, version, info):
 				value += '.000'
 				if tz: value += 'Z\''
 				else: value += '+0000\''
-				value = '{"$date":' + value + '}'
+				if mongotypes:
+					value = '{"$date":' + value + '}'
+				else:
+					value = value
 
 		if len(value) > 0: inserts.append(value)
-		
+
 	fn = len(fields)
 	x = 0
 	rrecords = []
@@ -131,7 +141,7 @@ def csql2mongo(file, out, tz, verbose, version, info):
 		for record in records:
 			for field in fields:
 				a_fields.append(field)
-		
+
 		for record in records:
 			r = '"' + a_fields[x] + '":' + record
 			r = re.sub('\'', '"', r)
@@ -145,17 +155,27 @@ def csql2mongo(file, out, tz, verbose, version, info):
 		% (out, file))
 
 	f = open(out, 'w')
+	ac = ''
+	if array:
+		ac = ','
+		f.write('[\n')
+
+	x = 0
 	for record in rrecords:
 		record = re.sub('@@', ',', record)
-		record = '{' + record + '}'
+		if x == len(rrecords) - 1: ac = ''
+		record = '{' + record + '}' + ac
 		f.write(record + '\n')
+		x = x + 1
+
+	if array: f.write(']\n')
 
 	f.close()
 
 
 # Handle any command line arguments.
 try:
-	opts, args = getopt.getopt(sys.argv[1:], "f:o:tlvi")
+	opts, args = getopt.getopt(sys.argv[1:], "f:o:tnalvi")
 except:
 	print('Invalid option or argument.')
 	displayInfo()
@@ -164,6 +184,8 @@ except:
 file = None
 out = None
 tz = False
+mongotypes = None
+array = None
 verbose = False
 version = False
 info = False
@@ -174,6 +196,10 @@ for o, a in opts:
 		out = a
 	elif o == '-t':
 		tz = True
+	elif o == '-n':
+		mongotypes = False
+	elif o == '-a':
+		array = True
 	elif o == '-l':
 		verbose = True
 	elif o == '-v':
@@ -183,4 +209,4 @@ for o, a in opts:
 	else:
 		assert False, 'unhandled option'
 
-csql2mongo(file, out, tz, verbose, version, info)
+csql2mongo(file, out, tz, mongotypes, array, verbose, version, info)

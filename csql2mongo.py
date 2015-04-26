@@ -13,7 +13,7 @@ import os
 import re
 import argparse
 
-signature = 'csql2mongo 1.0.2 (https://github.com/stpettersens/csql2mongo)'
+signature = 'csql2mongo 1.0.3 (https://github.com/stpettersens/csql2mongo)'
 
 def displayVersion():
 	print('\n' + signature);
@@ -21,7 +21,7 @@ def displayVersion():
 def displayInfo():
 	print(__doc__)
 
-def csql2mongo(file, out, tz, verbose, version, info):
+def csql2mongo(file, out, tz, mongotypes, array, verbose, version, info):
 
 	if len(sys.argv) == 1:
 		displayInfo()
@@ -45,6 +45,10 @@ def csql2mongo(file, out, tz, verbose, version, info):
 	if out.endswith('.json') == False:
 		print('Output file is not a JSON file.')
 		sys.exit(1)
+
+	if mongotypes == None: mongotypes = True
+
+	if array == None: array = False
 
 	head, tail = os.path.split(file)
 	collection = re.sub('.sql', '', tail)
@@ -81,12 +85,12 @@ def csql2mongo(file, out, tz, verbose, version, info):
 			headers = True
 
 		m = re.search('(^[\`a-zA-Z0-9_]+)', line)
-		if m and headers: 
+		if m and headers:
 			f = m.group(1)
 			f = re.sub('\`', '', f)
 			f = re.sub('CREATE|ENGINE|INSERT', '', f)
 			if len(f) > 0: fields.append(f)
-			
+
 		pattern = re.compile('INSERT INTO')
 		if pattern.match(line):
 			headers = False
@@ -105,8 +109,10 @@ def csql2mongo(file, out, tz, verbose, version, info):
 			value = m.group(1)
 
 			pattern = re.compile('\'[\d\w]{24}\'')
-			if pattern.match(value):
+			if pattern.match(value) and mongotypes:
 				value = '{"$oid":' + value + '}'
+			else:
+				value = value
 
 			pattern = re.compile('\'\d{4}\-\d{2}\-\d{2}')
 			if pattern.match(value):
@@ -115,10 +121,13 @@ def csql2mongo(file, out, tz, verbose, version, info):
 				value += '.000'
 				if tz: value += 'Z\''
 				else: value += '+0000\''
-				value = '{"$date":' + value + '}'
+				if mongotypes:
+					value = '{"$date":' + value + '}'
+				else:
+					value = value
 
 		if len(value) > 0: inserts.append(value)
-		
+
 	fn = len(fields)
 	x = 0
 	rrecords = []
@@ -132,7 +141,7 @@ def csql2mongo(file, out, tz, verbose, version, info):
 		for record in records:
 			for field in fields:
 				a_fields.append(field)
-		
+
 		for record in records:
 			r = '"' + a_fields[x] + '":' + record
 			r = re.sub('\'', '"', r)
@@ -146,10 +155,20 @@ def csql2mongo(file, out, tz, verbose, version, info):
 		.format(out, file))
 
 	f = open(out, 'w')
+	ac = ''
+	if array:
+		ac = ','
+		f.write('[\n')
+
+	x = 0
 	for record in rrecords:
 		record = re.sub('@@', ',', record)
-		record = '{' + record + '}'
+		if x == len(rrecords) - 1: ac = ''
+		record = '{' + record + '}' + ac
 		f.write(record + '\n')
+		x = x + 1
+
+	if array: f.write(']\n')
 
 	f.close()
 
@@ -159,9 +178,11 @@ parser = argparse.ArgumentParser(description='Utility to convert a SQL dump to a
 parser.add_argument('-f', '--file', action='store', dest='file', metavar="FILE")
 parser.add_argument('-o', '--out', action='store', dest='out', metavar="OUT")
 parser.add_argument('-t', '--tz', action='store_true', dest='tz')
+parser.add_argument('-n', '--no-mongo-types', action='store_false', dest='mongotypes')
+parser.add_argument('-a', '--array', action='store_true', dest='array')
 parser.add_argument('-l', '--verbose', action='store_true', dest='verbose')
 parser.add_argument('-v', '--version', action='store_true', dest='version')
 parser.add_argument('-i', '--info', action='store_true', dest='info')
 argv = parser.parse_args()
 
-csql2mongo(argv.file, argv.out, argv.tz, argv.verbose, argv.version, argv.info)
+csql2mongo(argv.file, argv.out, argv.tz, argv.mongotypes, argv.array, argv.verbose, argv.version, argv.info)
