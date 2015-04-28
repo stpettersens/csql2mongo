@@ -13,7 +13,7 @@ import os
 import re
 import argparse
 
-signature = 'csql2mongo 1.0.3 (https://github.com/stpettersens/csql2mongo)'
+signature = 'csql2mongo 1.0.4 (https://github.com/stpettersens/csql2mongo)'
 
 def displayVersion():
 	print('\n' + signature);
@@ -155,20 +155,27 @@ def csql2mongo(file, out, tz, mongotypes, array, verbose, version, info):
 		.format(out, file))
 
 	f = open(out, 'w')
-	ac = ''
 	if array:
-		ac = ','
-		f.write('[\n')
+                json = '['
+                x = 0
+                for record in rrecords:
+                        ac = ','
+                        if x == len(rrecords) - 1: ac = ''
+                        record = re.sub('@@', ',', record)
+                        record = re.sub('\"{', '{', record)
+                        record = re.sub('}\"', '}', record)
+                        json += '{' + record + '}' + ac
+                        x = x + 1
 
-	x = 0
-	for record in rrecords:
-		record = re.sub('@@', ',', record)
-		if x == len(rrecords) - 1: ac = ''
-		record = '{' + record + '}' + ac
-		f.write(record + '\n')
-		x = x + 1
+                json += ']'
+                f.write(json)
 
-	if array: f.write(']\n')
+        else:
+
+                for record in rrecords:
+                        record = re.sub('@@', ',', record)
+                        record = '{' + record + '}'
+                        f.write(record + '\n')
 
 	f.close()
 
