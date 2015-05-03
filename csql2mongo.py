@@ -104,9 +104,19 @@ def csql2mongo(file, out, tz, mongotypes, array, verbose, version, info):
 		if m and headers == False:
 			value = m.group(1)
 
-		m = re.search('(^[\d\"\'\w\_\.][^(DROP)][^(INSERT)][^\n|,|)]+)', line)
+		m = re.search('(TRUE|FALSE|NULL)', line, re.IGNORECASE)
 		if m and headers == False:
 			value = m.group(1)
+			value = value.lower()
+
+		m = re.search('(^[\d\"\'\w\_\.][^(DROP)][^(INSERT)][^\n|,|)]+)', line, re.IGNORECASE)
+
+		if m and headers == False:
+			value = m.group(1)
+
+			pattern = re.compile('TRUE|FALSE|NULL', re.IGNORECASE)
+			if pattern.match(value):
+				value = value.lower()
 
 			pattern = re.compile('\'[\d\w]{24}\'')
 			if pattern.match(value) and mongotypes:
@@ -155,27 +165,20 @@ def csql2mongo(file, out, tz, mongotypes, array, verbose, version, info):
 		.format(out, file))
 
 	f = open(out, 'w')
+	ac = ''
 	if array:
-                json = '['
-                x = 0
-                for record in rrecords:
-                        ac = ','
-                        if x == len(rrecords) - 1: ac = ''
-                        record = re.sub('@@', ',', record)
-                        record = re.sub('\"{', '{', record)
-                        record = re.sub('}\"', '}', record)
-                        json += '{' + record + '}' + ac
-                        x = x + 1
+		ac = ','
+		f.write('[\n')
 
-                json += ']'
-                f.write(json)
+	x = 0
+	for record in rrecords:
+		record = re.sub('@@', ',', record)
+		if x == len(rrecords) - 1: ac = ''
+		record = '{' + record + '}' + ac
+		f.write(record + '\n')
+		x = x + 1
 
-        else:
-
-                for record in rrecords:
-                        record = re.sub('@@', ',', record)
-                        record = '{' + record + '}'
-                        f.write(record + '\n')
+	if array: f.write(']\n')
 
 	f.close()
 

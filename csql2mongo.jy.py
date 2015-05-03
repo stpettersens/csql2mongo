@@ -13,7 +13,7 @@ import os
 import re
 import getopt
 
-signature = 'csql2mongo 1.0.3 [Jython] (https://github.com/stpettersens/csql2mongo)'
+signature = 'csql2mongo 1.0.4 [Jython] (https://github.com/stpettersens/csql2mongo)'
 
 def displayVersion():
 	print('\n' + signature);
@@ -104,9 +104,18 @@ def csql2mongo(file, out, tz, mongotypes, array, verbose, version, info):
 		if m and headers == False:
 			value = m.group(1)
 
+		m = re.search('(TRUE|FALSE|NULL)', line, re.IGNORECASE)
+		if m and headers == False:
+			value = m.group(1)
+			value = value.lower()
+
 		m = re.search('(^[\d\"\'\w\_\.][^(DROP)][^(INSERT)][^\n|,|)]+)', line)
 		if m and headers == False:
 			value = m.group(1)
+
+			pattern = re.compile('TRUE|FALSE|NULL', re.IGNORECASE)
+			if m and headers == False:
+				value = value.lower()
 
 			pattern = re.compile('\'[\d\w]{24}\'')
 			if pattern.match(value) and mongotypes:
