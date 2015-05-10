@@ -13,7 +13,7 @@ import os
 import re
 import getopt
 
-signature = 'csql2mongo 1.0.4 [Jython] (https://github.com/stpettersens/csql2mongo)'
+signature = 'csql2mongo 1.0.5 [Jython] (https://github.com/stpettersens/csql2mongo)'
 
 def displayVersion():
 	print('\n' + signature);
@@ -65,6 +65,7 @@ def csql2mongo(file, out, tz, mongotypes, array, verbose, version, info):
 		l = re.sub('VALUES \(', 'VALUES (\n', l)
 		l = re.sub(',', ',\n', l)
 		l = re.sub('\),', ')\nINSERT INTO `null` VALUES (\n', l)
+		l = re.sub('\)', '', l)
 		l = re.sub('\n\n', '\n', l)
 		processed_lines.append(l);
 	processed_lines = ''.join(processed_lines).split('\n')
