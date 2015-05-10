@@ -13,7 +13,7 @@ import os
 import re
 import argparse
 
-signature = 'csql2mongo 1.0.4 (https://github.com/stpettersens/csql2mongo)'
+signature = 'csql2mongo 1.0.5 (https://github.com/stpettersens/csql2mongo)'
 
 def displayVersion():
 	print('\n' + signature);
@@ -50,8 +50,8 @@ def csql2mongo(file, out, tz, mongotypes, array, verbose, version, info):
 
 	if array == None: array = False
 
-	head, tail = os.path.split(file)
-	collection = re.sub('.sql', '', tail)
+	head, tail = os.path.split(out)
+	collection = re.sub('.json', '', tail)
 
 	f = open(file, 'r')
 	lines = f.readlines()
@@ -65,10 +65,11 @@ def csql2mongo(file, out, tz, mongotypes, array, verbose, version, info):
 		l = re.sub('VALUES \(', 'VALUES (\n', l)
 		l = re.sub(',', ',\n', l)
 		l = re.sub('\),', ')\nINSERT INTO `null` VALUES (\n', l)
+		l = re.sub('\(', '', l);
 		l = re.sub('\n\n', '\n', l)
 		processed_lines.append(l);
 	processed_lines = ''.join(processed_lines).split('\n')
-	if lines[0].startswith('--!'): processed_lines = lines
+	if lines[0].startswith('-- !'): processed_lines = lines
 	lines = []
 	x = 0
 	while x < len(processed_lines):
@@ -88,7 +89,7 @@ def csql2mongo(file, out, tz, mongotypes, array, verbose, version, info):
 		if m and headers:
 			f = m.group(1)
 			f = re.sub('\`', '', f)
-			f = re.sub('CREATE|ENGINE|INSERT', '', f)
+			f = re.sub('CREATE|ENGINE|INSERT|PRIMARY|LOCK', '', f)
 			if len(f) > 0: fields.append(f)
 
 		pattern = re.compile('INSERT INTO')
