@@ -9,11 +9,10 @@ Licensed under the MIT/X11 License.
 Tweaked for Jython.
 """
 import sys
-import os
 import re
 import getopt
 
-signature = 'csql2mongo 1.0.5 [Jython] (https://github.com/stpettersens/csql2mongo)'
+signature = 'csql2mongo 1.0.6 [Jython] (https://github.com/stpettersens/csql2mongo)'
 
 def displayVersion():
 	print('\n' + signature);
@@ -49,9 +48,6 @@ def csql2mongo(file, out, tz, mongotypes, array, verbose, version, info):
 	if mongotypes == None: mongotypes = True
 
 	if array == None: array = False
-
-	head, tail = os.path.split(file)
-	collection = re.sub('.sql', '', tail)
 
 	f = open(file, 'r')
 	lines = f.readlines()
